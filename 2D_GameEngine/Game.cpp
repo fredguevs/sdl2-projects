@@ -2,9 +2,15 @@
 #include <iostream>
 
 #include "TextureManager.h"
+#include "GameObject.h"
+#include "Map.h"
 
-SDL_Texture* playerTex;
-SDL_Rect srcR, destR;
+
+GameObject* player;
+
+Map* map;
+
+SDL_Renderer* Game::renderer = nullptr;
 
 
 Game::Game() {}
@@ -20,22 +26,17 @@ void Game::init(const char *title, int xpos, int ypos, int width, int height, bo
   if (SDL_Init(SDL_INIT_EVERYTHING) == 0) {
     std::cout << "Subsystems Initialized!..." << std::endl;
     
-    window = SDL_CreateWindow(title, xpos, ypos, width, height, fullscreen);
-    
-    
+    window = SDL_CreateWindow(title, xpos, ypos, width, height, flags);
+
     if (window) {
       std::cout << "Window created" << std::endl;
     }
 
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-
-    
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
     if (renderer) {
-      SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-      SDL_RenderSetScale(renderer, 2, 2);
+      SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
       SDL_RenderDrawPoint(renderer, xpos/2, ypos/2);
-
 
       std::cout << "Renderer created" << std::endl;
     }
@@ -45,30 +46,31 @@ void Game::init(const char *title, int xpos, int ypos, int width, int height, bo
   else {
     isRunning = false;
   }
-  playerTex = TextureManager::LoadTexture("assets/player.png", renderer);
+  player = new GameObject("assets/player.png", 0, 0);
+  map = new Map();
 }
 
 void Game::handleEvents() {
   SDL_Event event;
-  SDL_PollEvent(&event);
 
-  switch (event.type) {
-    case SDL_QUIT:
-      isRunning = false;
-      break;
-  
-    default:
-      break;
+  while (SDL_PollEvent(&event)) {
+    switch (event.type) {
+      case SDL_QUIT:
+        std::cout << "Quit Game called" << std::endl;
+        isRunning = false;
+        break;
+    }
   }
 }
 
 void Game::update(float dt) {
-  posX += speed * dt;
+  player->Update(dt);
 
-  destR.h = 64;
-  destR.w = 64;
 
-  destR.x = static_cast<int>(posX);
+  // destR.h = 64;
+  // destR.w = 64;
+
+  // destR.x = static_cast<int>(posX);
 
 
 }
@@ -78,12 +80,16 @@ void Game::render(){
   SDL_RenderClear(renderer);
   // add all textures to be rendered
   // painter's alg - render background, then entities
-  SDL_RenderCopy(renderer, playerTex, NULL, &destR);
+  map->DrawMap();
+  player->Render();
   SDL_RenderPresent(renderer);
 }
 
 void Game::clean() {
+  std::cout << "Killing window" << '\n';
   SDL_DestroyWindow(window);
+
+
   SDL_DestroyRenderer(renderer);
   SDL_Quit();
   std::cout << "Game Cleaned" << std::endl;

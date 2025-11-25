@@ -1,0 +1,30 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build SDL2 Game",
+      "type": "shell",
+      "command": "/usr/bin/g++",
+      "args": [
+        "-g",
+        "-Wall",
+        "*.cpp",
+        "-o",
+        "main",
+        "`sdl2-config --cflags --libs`"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "shell": {
+          "executable": "/bin/bash",
+          "args": ["-c"]
+        }
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    }
+  ]
+}

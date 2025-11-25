@@ -11,8 +11,8 @@ public:
   Game();
   ~Game();
 
-  float posX = 0.0f;
-  float speed = 20.0f;
+
+  
 
   void init(const char* title, int xpos, int ypos, int width, int height, bool fullscreen);
 
@@ -23,10 +23,12 @@ public:
 
   bool running() {return isRunning; };
 
+  static SDL_Renderer *renderer;
+
 private:
   bool isRunning;
   SDL_Window *window;
-  SDL_Renderer *renderer;
+  
 
 };
 
