@@ -5,7 +5,7 @@ Game *game = nullptr;
 int main(int argc, const char * argv[]) {
   game = new Game();
 
-  game->init("Engine", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, false);
+  game->init("Engine", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1000, 1000, false);
 
   Uint32 lastTime = SDL_GetTicks();
   float deltaTime = 0.0f;
