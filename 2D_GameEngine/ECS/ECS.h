@@ -56,8 +56,6 @@ public:
     for (auto& c: components) {
       c->update();
     }
-
-    
   }
 
   void draw() {
@@ -105,8 +103,6 @@ public:
     auto ptr(componentArray[getComponentTypeID<T>()]);
     return *static_cast<T*>(ptr);
   }
-
-
 
 };
 

@@ -4,6 +4,7 @@
 #include "../Game.h"
 #include "ECS.h"
 #include "Components.h"
+#include <cmath>
 
 class KeyboardController : public Component {
 public:
@@ -16,22 +17,32 @@ public:
   
   void update() override {
     const Uint8* keystates = SDL_GetKeyboardState(NULL);
-    
-    transform->velocity.x = 0;
-    transform->velocity.y = 0;
-    
+
+    float dx = 0.0f;
+    float dy = 0.0f;
+
     if (keystates[SDL_SCANCODE_W]) {
-      transform->velocity.y = -1;
+      dy -= 1.0f;
     }
     if (keystates[SDL_SCANCODE_S]) {
-      transform->velocity.y = 1;
+      dy += 1.0f;
     }
     if (keystates[SDL_SCANCODE_A]) {
-      transform->velocity.x = -1;
+      dx -= 1.0f;
     }
     if (keystates[SDL_SCANCODE_D]) {
-      transform->velocity.x = 1;
+      dx += 1.0f;
     }
+
+    // normalize so diagonals aren't faster
+    float len = std::sqrt(dx*dx + dy*dy);
+    if (len > 0.0f) {
+      dx /= len;
+      dy /= len;
+    }
+
+    transform->velocity.x = dx;
+    transform->velocity.y = dy;
   }
 
 
