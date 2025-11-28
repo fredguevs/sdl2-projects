@@ -35,10 +35,10 @@ public:
   }
 
   void update() override {
-    dstRect.x = (int)transform->position.x;
-    dstRect.y = (int)transform->position.y;
-    dstRect.w = (int)(transform->width * transform->scale);
-    dstRect.h = (int)(transform->height * transform->scale);
+    dstRect.x = static_cast<int>(transform->position.x);
+    dstRect.y = static_cast<int>(transform->position.y);
+    dstRect.w = static_cast<int>(transform->width * transform->scale);
+    dstRect.h = static_cast<int>(transform->height * transform->scale);
   }
 
   void draw() override {
