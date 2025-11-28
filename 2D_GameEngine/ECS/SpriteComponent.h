@@ -3,6 +3,7 @@
 
 #include "Components.h"
 #include "SDL2/SDL.h"
+#include "../TextureManager.h"
 
 class SpriteComponent : public Component {
 private:
@@ -17,12 +18,16 @@ public:
     setTex(path);
   }
 
+  ~SpriteComponent() {
+    SDL_DestroyTexture(texture);
+  }
+
   void init() override {
     transform = &entity->getComponent<TransformComponent>();
 
     srcRect.x = srcRect.y = 0;
-    srcRect.w = srcRect.h = 32;
-    dstRect.w = dstRect.h = 64;
+    srcRect.w = transform->width;
+    srcRect.h = transform->height;
   }
 
   void setTex(const char* path) {
@@ -32,6 +37,8 @@ public:
   void update() override {
     dstRect.x = (int)transform->position.x;
     dstRect.y = (int)transform->position.y;
+    dstRect.w = (int)(transform->width * transform->scale);
+    dstRect.h = (int)(transform->height * transform->scale);
   }
 
   void draw() override {

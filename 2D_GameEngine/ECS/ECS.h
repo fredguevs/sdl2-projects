@@ -71,8 +71,9 @@ public:
   void destroy() { active = false; }
 
   // Need to allow entity class to see whether or not it has components
+  // Each Entity has a bitSet detailing, which of the existing, components the Entity has
   template <typename T> bool hasComponent() const {
-    return componentBitSet[getComponentTypeID<T>];
+    return componentBitSet[getComponentTypeID<T>()];
   }
 
   template <typename T, typename... TArgs>
