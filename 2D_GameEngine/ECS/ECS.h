@@ -10,11 +10,13 @@
 
 class Component;
 class Entity;
+class Manager;
 
 using ComponentID = std::size_t;
+using Group = std::size_t;
 
-inline ComponentID getComponentTypeID() {
-  static ComponentID lastID = 0;
+inline ComponentID getNewComponentTypeID() {
+  static ComponentID lastID = 0u;
   return lastID++; 
 }
 
@@ -22,13 +24,15 @@ template <typename T>
 inline ComponentID getComponentTypeID() noexcept { // noexcept - specifies function is non-throwing
   // Overload resolution prefers non-template functions when both match
   // this is a perfect match though since it doesn't include getComponentID<T>
-  static ComponentID typeID = getComponentTypeID();
+  static ComponentID typeID = getNewComponentTypeID();
   return typeID;
 }
 
 constexpr std::size_t maxComponents = 32; // Non-type template parameters like N in std::bitset<N> must be compile-time constexpr
+constexpr std::size_t maxGroups = 32;
 
-using ComponentBitSet = std::bitset<maxComponents>;
+using GroupBitset = std::bitset<maxGroups>;
+using ComponentBitset = std::bitset<maxComponents>;
 using ComponentArray = std::array<Component*, maxComponents>;
 
 class Component {
@@ -43,15 +47,19 @@ public:
 
 class Entity {
 private:
+  Manager& manager;
   bool active = true;
   // Don't know how many components an entity has at compile time
   // unique_ptr alows for automatic destruction when entity dies
   std::vector<std::unique_ptr<Component>> components; // there can be at most one unique_ptr pointing to any one resource
   
   ComponentArray componentArray;
-  ComponentBitSet componentBitSet;
+  ComponentBitset componentBitset;
+  GroupBitset groupBitset;
 
 public:
+  Entity(Manager& mManager) :  manager(mManager) {}
+
   void update() {
     for (auto& c: components) {
       c->update();
@@ -64,16 +72,26 @@ public:
     }
 
   };
-  bool isActive() { return active; }
+  bool isActive() const { return active; }
 
   // Component has reference to owner, call this function from any component, Manager class loops and checks
   // entity's active status, if false, removes them from the game
   void destroy() { active = false; }
 
+  bool hasGroup(Group mGroup) {
+    return groupBitset[mGroup];
+  }
+
+  void addGroup(Group mGroup);
+
+  void delGroup(Group mGroup) {
+    groupBitset[mGroup] = false;
+  }
+
   // Need to allow entity class to see whether or not it has components
   // Each Entity has a bitSet detailing, which of the existing, components the Entity has
   template <typename T> bool hasComponent() const {
-    return componentBitSet[getComponentTypeID<T>()];
+    return componentBitset[getComponentTypeID<T>()];
   }
 
   template <typename T, typename... TArgs>
@@ -93,7 +111,7 @@ public:
     components.emplace_back(std::move(uPtr));
 
     componentArray[getComponentTypeID<T>()] = c;
-    componentBitSet[getComponentTypeID<T>()] = true;
+    componentBitset[getComponentTypeID<T>()] = true;
 
     c->init();
     return *c;
@@ -110,6 +128,7 @@ public:
 class Manager {
 private:
   std::vector<std::unique_ptr<Entity>> entities;
+  std::array<std::vector<Entity*>, maxGroups> groupedEntities;
 
 public:
   void update() {
@@ -125,6 +144,18 @@ public:
   }
 
   void refresh() {
+    for (auto i = 0u; i < maxGroups; ++i)
+    {
+      auto &v = groupedEntities[i];
+      v.erase(
+        std::remove_if(std::begin(v), std::end(v),
+          [i](Entity *mEntity)
+          {
+            return !mEntity->isActive() || !mEntity->hasGroup(i);
+          }),
+        std::end(v));
+    }
+
     entities.erase(
       std::remove_if(
         std::begin(entities),
@@ -137,8 +168,17 @@ public:
     );
   }
 
+  void addToGroup(Entity* mEntity, Group mGroup) {
+    groupedEntities[mGroup].emplace_back(mEntity);
+  }
+
+  std::vector<Entity*>& getGroup(Group mGroup) {
+    return groupedEntities[mGroup];
+  }
+
+
   Entity& addEntity() {
-    Entity* e = new Entity();
+    Entity* e = new Entity(*this);
     std::unique_ptr<Entity> uPtr{ e };
     entities.emplace_back(std::move(uPtr));
 
